@@ -1,0 +1,127 @@
+Mrym:
+.. ..:
+### سوکت (Socket) در برنامه‌نویسی
+
+سوکت‌ها (Sockets) یکی از ابزارهای اصلی برای برقراری ارتباط شبکه‌ای در برنامه‌نویسی هستند. آن‌ها به برنامه‌ها اجازه می‌دهند تا با یکدیگر از طریق شبکه (مانند اینترنت یا شبکه محلی) ارتباط برقرار کنند. سوکت‌ها می‌توانند برای ارسال و دریافت داده‌ها بین دو یا چند کامپیوتر استفاده شوند.
+
+### انواع سوکت‌ها
+
+1. سوکت‌های TCP: برای ارتباطات مطمئن و اتصال‌پذیر استفاده می‌شوند. این نوع سوکت‌ها تضمین می‌کنند که داده‌ها به ترتیب و بدون خطا ارسال و دریافت شوند.
+2. سوکت‌های UDP: برای ارتباطات غیرمطمئن و بدون اتصال استفاده می‌شوند. این نوع سوکت‌ها سریع‌تر هستند اما هیچ تضمینی برای ترتیب یا صحت داده‌ها ندارند.
+
+### استفاده از سوکت‌ها در پایتون
+
+پایتون کتابخانه‌ای به نام socket دارد که به شما این امکان را می‌دهد تا با سوکت‌ها کار کنید. در اینجا یک مثال ساده از نحوه استفاده از سوکت‌ها در پایتون آورده شده است.
+
+### مثال: سرور و کلاینت با سوکت‌های TCP
+
+#### 1. سرور
+
+در این مثال، سرور یک عدد تصادفی بین 1 تا 100 را انتخاب می‌کند و به کلاینت‌ها اجازه می‌دهد که عددی را حدس بزنند.
+
+import socket
+import random
+
+def start_server():
+    # ایجاد سوکت
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    
+    # تعیین آدرس و پورت
+    server_address = ('localhost', 65432)
+    server_socket.bind(server_address)
+    
+    # گوش دادن به اتصالات
+    server_socket.listen(1)
+    print("سرور در حال گوش دادن است...")
+    
+    # انتخاب عدد تصادفی
+    secret_number = random.randint(1, 100)
+    print(f"عدد مخفی: {secret_number}")  # برای تست، عدد مخفی را چاپ می‌کنیم
+    
+    while True:
+        # پذیرش اتصال کلاینت
+        client_socket, client_address = server_socket.accept()
+        print(f"اتصال از {client_address} برقرار شد.")
+        
+        try:
+            while True:
+                # دریافت عدد حدس زده شده از کلاینت
+                guess = client_socket.recv(1024).decode()
+                if not guess:
+                    break
+                
+                guess = int(guess)
+                print(f"عدد حدس زده شده: {guess}")
+                
+                # بررسی عدد حدس زده شده
+                if guess < secret_number:
+                    response = "عدد حدس زده شده کوچکتر است."
+                elif guess > secret_number:
+                    response = "عدد حدس زده شده بزرگتر است."
+                else:
+                    response = "تبریک! شما عدد را درست حدس زدید."
+                    client_socket.sendall(response.encode())
+                    break
+                
+                # ارسال پاسخ به کلاینت
+                client_socket.sendall(response.encode())
+        
+        finally:
+            client_socket.close()
+
+if name == "__main__":
+    start_server()
+
+
+#### 2. کلاینت
+
+کلاینت به سرور متصل می‌شود و عددی را برای حدس زدن ارسال می‌کند.
+
+import socket
+
+def start_client():
+    # دریافت آدرس و پورت سرور از کاربر
+    server_address = input("آدرس سرور را وارد کنید (مثلاً localhost): ")
+    server_port = int(input("پورت سرور را وارد کنید (مثلاً 65432): "))
+    
+    # ایجاد سوکت
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    
+    try:
+        # اتصال به سرور
+        client_socket.connect((server_address, server_port))
+        
+        while True:
+            # دریافت عدد حدس زده شده از کاربر
+            guess = input("عدد خود را حدس بزنید (بین 1 تا 100): ")
+            client_socket.sendall(guess.encode())
+            
+            # دریافت پاسخ از سرور
+            response = client_socket.recv(1024).decode()
+            print(response)
+            
+            if "تبریک" in response:
+                break
+    
+    finally:
+        client_socket.close()
+
+if name == "__main__":
+    start_client()
+
+
+### نحوه اجرا
+
+1. کد سرور را اجرا کنید. این کد باید در یک ترمینال یا محیط توسعه اجرا شود.
+2. سپس کد کلاینت را اجرا کنید و آدرس و پورت سرور (به طور پیش‌فرض localhost و 65432) را وارد کنید.
+3. حالا می‌توانید عددهای خود را حدس بزنید و پاسخ‌های سرور را مشاهده کنید.
+
+### توضیحات بیشتر
+
+- socket.socket(socket.AF_INET, socket.SOCK_STREAM): این خط یک سوکت TCP ای
+جاد می‌کند.
+- bind(): این تابع آدرس IP و پورت را به سوکت متصل می‌کند.
+- listen(): این تابع به سوکت اجازه می‌دهد تا به اتصالات ورودی گوش دهد.
+- accept(): این تابع یک اتصال ورودی را قبول کرده و یک سوکت جدید برای ارتباط با کلاینت ایجاrecv()- recv() و sendall(): این توابع برای دریافت و ارسال داده‌ها استفاده می‌شوند.
+
+با استفاده از این مثال، شما می‌توانید مفهوم پایه‌ای سوکت‌ها را در برنامه‌نویسی پایتون درک کنید و با ساختار کلی آن آشنا شوید.
